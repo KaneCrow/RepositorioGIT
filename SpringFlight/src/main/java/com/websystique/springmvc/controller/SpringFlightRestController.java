@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.gson.Gson;
-import com.websystique.springmvc.model.ResultFlightDet;
 import com.websystique.springmvc.model.Results;
 import com.websystique.springmvc.model.Routes;
 import com.websystique.springmvc.service.FlightsService;
@@ -39,15 +37,10 @@ public class SpringFlightRestController {
 					result = userService.findMyWayDirect(departure, arrival, departureDateTime, arrivalDateTime);
 				}	
 		//Rellenamos con las posibles rutas con 1 stop			
-//				List<Results> resultsIndirect = userService.findMyWayIndirect(routes, departure, arrival, departureDateTime, arrivalDateTime);
-//				for(Results resultIndirect : resultsIndirect){
-//					result.add(resultIndirect);
-//				}
-//				return new ResponseEntity<List<Results>>(result, HttpStatus.OK);
-		//			}else{
-		//				System.out.println("NOPE");
-		//				return new ResponseEntity<List<Results>>(result, HttpStatus.OK);
-		//			}
+				List<Results> resultsIndirect = userService.findMyWayIndirect(routes, departure, arrival, departureDateTime, arrivalDateTime);
+				for(Results resultIndirect : resultsIndirect){
+					result.add(resultIndirect);
+				}
 			}
 		}catch(Exception e){return new ResponseEntity<List<Results>>(result, HttpStatus.INTERNAL_SERVER_ERROR);}
 		return new ResponseEntity<List<Results>>(result, HttpStatus.OK);
