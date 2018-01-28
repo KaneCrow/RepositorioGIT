@@ -54,9 +54,11 @@ public class FlightsServiceImpl implements FlightsService{
 		List<ResultFlightDet> list = new ArrayList<ResultFlightDet>();
 		Results res = new Results();
 		List<ResultFlightDet> singleLeg = new ArrayList<ResultFlightDet>();
+
 		if(jodaTime.isBefore(jodaTimeArr)){
-			int difM = Months.monthsBetween(jodaTime, jodaTimeArr).getMonths();
-			for(int x=0; x < difM+2; x++){
+//			int difM = Months.monthsBetween(jodaTime, jodaTimeArr).getMonths();
+			int difM = monthsBetween(jodaTime, jodaTimeArr);
+			for(int x=0; x <= difM; x++){
 				DateTime jodaTimeAux = jodaTime.plusMonths(x);
 				flights = new FlightsMonth(); 
 				try{
@@ -64,7 +66,7 @@ public class FlightsServiceImpl implements FlightsService{
 //					Gson gson = new Gson();
 					list = new ArrayList<ResultFlightDet>(); 
 					list = getFlightResultDetail(departure, arrival, departureDateTime, arrivalDateTime, flights, jodaTimeAux.getYear());
-//					System.out.println("A ver......" + gson.toJson(list));
+
 					for(int c=0; c < list.size();c++){
 						res = new Results();
 						res.setStops(0);
@@ -72,7 +74,7 @@ public class FlightsServiceImpl implements FlightsService{
 						singleLeg.add(list.get(c));
 						res.setLegs(singleLeg);
 						result.add(res);
-//						System.out.println(gson.toJson(result));
+
 					}
 				}catch(Exception e){
 					continue;
@@ -110,9 +112,12 @@ public class FlightsServiceImpl implements FlightsService{
 		DateTime jodaTimeArrival = DateTime.parse(arrivalDateTime);
 //		Gson gson = new Gson();
 		for(FlightDay flysDay : flights.getDays()){
-			
-			if((dateTimeFormatter1.parseDateTime(year+"-"+new Integer(flights.getMonth())+"-"+flysDay.getDay()).isAfter(jodaTimeDeparture)
-					&& dateTimeFormatter1.parseDateTime(year+"-"+new Integer(flights.getMonth())+"-"+flysDay.getDay()).isBefore(jodaTimeArrival))){
+
+			if((jodaTimeDeparture.toString(dateTimeFormatter1).equals(DateTime.parse(year+"-"+new Integer(flights.getMonth())+"-"+flysDay.getDay()).toString(dateTimeFormatter1))
+					|| jodaTimeDeparture.isBefore(DateTime.parse(year+"-"+new Integer(flights.getMonth())+"-"+flysDay.getDay())))
+				&& (jodaTimeArrival.toString(dateTimeFormatter1).equals(DateTime.parse(year+"-"+new Integer(flights.getMonth())+"-"+flysDay.getDay()).toString(dateTimeFormatter1))
+					|| jodaTimeArrival.isAfter(DateTime.parse(year+"-"+new Integer(flights.getMonth())+"-"+flysDay.getDay())))){
+
 				for(Flight vuelo : flysDay.getFlights()){
 					
 					DateTimeFormatter dateTimeFormatterVuelo = DateTimeFormat.forPattern("HH:mm");
@@ -149,12 +154,13 @@ public class FlightsServiceImpl implements FlightsService{
 		List<Results> result = new ArrayList<Results>();
 		DateTime jodaTime = DateTime.parse(departureDateTime);
 		DateTime jodaTimeArr = DateTime.parse(arrivalDateTime);
-		Gson gson = new Gson();
+//		Gson gson = new Gson();
 		if(jodaTime.isBefore(jodaTimeArr)){
 			Collection<String> perhaps = findOutInDirectFlights(routes, departure, arrival);
 			if(!perhaps.isEmpty()){
-				int difM = Months.monthsBetween(jodaTime, jodaTimeArr).getMonths();
-				for(int x=0; x < difM+2; x++){
+//				int difM = Months.monthsBetween(jodaTime, jodaTimeArr).getMonths();
+				int difM = monthsBetween(jodaTime, jodaTimeArr);
+				for(int x=0; x <= difM; x++){
 					DateTime jodaTimeAux = jodaTime.plusMonths(x);
 					FlightsMonth flights = new FlightsMonth();
 					FlightsMonth flights2 = new FlightsMonth();
@@ -167,14 +173,14 @@ public class FlightsServiceImpl implements FlightsService{
 							List<ResultFlightDet> list = new ArrayList<ResultFlightDet>();
 							List<ResultFlightDet> list2 = new ArrayList<ResultFlightDet>();
 							list = getFlightResultDetail(departure, posibleInter, departureDateTime, arrivalDateTime, flights, jodaTimeAux.getYear());
-							System.out.println("BATMAAAaNNN LIST 1:: " + gson.toJson(list));
+
 							for(int c=0; c < list.size();c++){
 								DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm");
 								DateTime jodaTimeDeparturePlus2 = DateTime.parse(list.get(c).getArrivalDateTime());
 								jodaTimeDeparturePlus2.plusHours(2);
-								System.out.println(list.get(c).getArrivalDateTime() +" PASA A SER "+ jodaTimeDeparturePlus2.plusHours(2).toString(dateTimeFormatter));
+
 								list2 = getFlightResultDetail(posibleInter, arrival, jodaTimeDeparturePlus2.plusHours(2).toString(dateTimeFormatter), arrivalDateTime, flights2, jodaTimeAux.getYear());
-								System.out.println("BATMAAAaNNN: LIST 2: " + gson.toJson(list2));
+
 								for (int y=0; y<list2.size(); y++){
 									Results res = new Results();
 									res.setStops(1);
@@ -219,9 +225,21 @@ public class FlightsServiceImpl implements FlightsService{
         similar.retainAll( perhapsDepArr );
         different.removeAll( similar );
 		
-//        System.out.printf("One:%s%nTwo:%s%nSimilar:%s%nDifferent:%s%n", perhapsArrDep, perhapsDepArr, similar, different);
+//        System.out.println("One:%s%nTwo:%s%nSimilar:%s%nDifferent:%s%n", perhapsArrDep, perhapsDepArr, similar, different);
         System.out.println("Similar size::" + similar.size() + "List::" + similar);
 		
 		return similar;
+	}
+	
+	private Integer monthsBetween (DateTime date1, DateTime date2){
+		int result = 0;
+		//when the days between dates is not enought to get a month but between dates there is a month change
+		if(date1.getYear()==date2.getYear()){
+			result = date2.getMonthOfYear() - date1.getMonthOfYear();
+		}else{
+			result = Months.monthsBetween(date1, date2).getMonths()+1;
+		}
+		
+		return result;
 	}
 }
